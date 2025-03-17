@@ -1,94 +1,111 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useSnackbar } from 'notistack';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid2';
-import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
-
-// project imports
-import AnimateButton from 'ui-component/extended/AnimateButton';
 
 // assets
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-// ===============================|| JWT - LOGIN ||=============================== //
-
 export default function AuthLogin() {
   const theme = useTheme();
-
-  const [checked, setChecked] = useState(true);
-
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar(); // Thông báo
+  const [taiKhoan, setTaiKhoan] = useState('');
+  const [matKhau, setMatKhau] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const API_TOKEN = "45UUXAPg34nKjGVdMpss7iwhccn7xPg4corm_X1c";
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
+  // Xử lý hiện/ẩn mật khẩu
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (event) => event.preventDefault();
+
+  // Xử lý đăng nhập
+  const handleLogin = async () => {
+    if (!taiKhoan || !matKhau) {
+      enqueueSnackbar('Vui lòng nhập đầy đủ thông tin!', { variant: 'warning' });
+      return;
+    }
+
+    const apiUrl = `https://noco-erp.com/api/v2/tables/mpyiz3tcxk9jry7/records?(maNhanVien,eq,${taiKhoan})~and(matKhau,eq,${matKhau})`;
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "xc-token": API_TOKEN, // Thêm token vào headers
+        },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.list && result.list.length > 0) {
+        const userData = result.list[0]; // Lấy thông tin user đầu tiên trong danh sách trả về
+        enqueueSnackbar('Đăng nhập thành công!', { variant: 'success' });
+
+        // Lưu token vào localStorage
+        localStorage.setItem("authToken", API_TOKEN);
+
+        // Lưu thông tin user vào localStorage
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        // Chuyển hướng vào trang /data-ban-giao
+        navigate('/data-ban-giao');
+      }
+      else {
+        enqueueSnackbar('Sai tài khoản hoặc mật khẩu!', { variant: 'error' });
+      }
+    } catch (error) {
+      console.error('Lỗi đăng nhập:', error);
+      enqueueSnackbar('Lỗi kết nối, vui lòng thử lại!', { variant: 'error' });
+    }
   };
 
   return (
     <>
       <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-        <InputLabel htmlFor="outlined-adornment-email-login">Email Address / Username</InputLabel>
-        <OutlinedInput id="outlined-adornment-email-login" type="email" value="info@codedthemes.com" name="email" inputProps={{}} />
+        <InputLabel htmlFor="taiKhoan">Tài khoản</InputLabel>
+        <OutlinedInput
+          id="taiKhoan"
+          type="text"
+          value={taiKhoan}
+          onChange={(e) => setTaiKhoan(e.target.value)}
+          placeholder="Nhập tài khoản"
+        />
       </FormControl>
 
       <FormControl fullWidth sx={{ ...theme.typography.customInput }}>
-        <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
+        <InputLabel htmlFor="matKhau">Mật khẩu</InputLabel>
         <OutlinedInput
-          id="outlined-adornment-password-login"
+          id="matKhau"
           type={showPassword ? 'text' : 'password'}
-          value="123456"
-          name="password"
+          value={matKhau}
+          onChange={(e) => setMatKhau(e.target.value)}
+          placeholder="Nhập mật khẩu"
           endAdornment={
             <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleClickShowPassword}
-                onMouseDown={handleMouseDownPassword}
-                edge="end"
-                size="large"
-              >
+              <IconButton onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">
                 {showPassword ? <Visibility /> : <VisibilityOff />}
               </IconButton>
             </InputAdornment>
           }
-          inputProps={{}}
-          label="Password"
         />
       </FormControl>
 
-      <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Grid>
-          <FormControlLabel
-            control={<Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />}
-            label="Keep me logged in"
-          />
-        </Grid>
-        <Grid>
-          <Typography variant="subtitle1" component={Link} to="/forgot-password" color="secondary" sx={{ textDecoration: 'none' }}>
-            Forgot Password?
-          </Typography>
-        </Grid>
-      </Grid>
       <Box sx={{ mt: 2 }}>
-        <AnimateButton>
-          <Button color="secondary" fullWidth size="large" type="submit" variant="contained">
-            Sign In
-          </Button>
-        </AnimateButton>
+        <Button color="secondary" fullWidth size="large" variant="contained" onClick={handleLogin}>
+          Đăng nhập
+        </Button>
       </Box>
     </>
   );

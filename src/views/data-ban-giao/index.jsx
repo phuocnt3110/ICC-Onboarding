@@ -11,7 +11,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import { IconRefresh, IconList } from '@tabler/icons-react';
 import CheckboxWithModal from './modal-checkbox-ban-giao';
 
-const API_BASE_URL = 'https://noco-erp.com/api/v2/tables/mj4sos7rrkeysgp/records';
+const API_BASE_URL = 'https://noco-erp.com/api/v2/tables/mk6ivvxeycpuwp4/records';
 const API_TOKEN = '45UUXAPg34nKjGVdMpss7iwhccn7xPg4corm_X1c';
 const PAGE_SIZE = 50;
 
@@ -27,6 +27,7 @@ export default function DataBanGiao() {
   const [ctvOptions, setCtvOptions] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [goiMuaData, setGoiMuaData] = useState({});
 
   const navigate = useNavigate();
   // State để điều khiển modal
@@ -70,18 +71,16 @@ export default function DataBanGiao() {
 
     let conditions = [];
 
-    // Điều kiện tìm kiếm (nối bằng ~or~ trong ())
     if (searchTerm) {
       let searchConditions = [];
-      searchConditions.push(`(maTheoDoiMoi,eq,${encodeURIComponent(searchTerm)})`);
+      searchConditions.push(`(maTheoDoi,eq,${encodeURIComponent(searchTerm)})`);
       searchConditions.push(`(nguoiBanGiao,eq,${encodeURIComponent(searchTerm)})`);
       searchConditions.push(`(tenHocVien,eq,${encodeURIComponent(searchTerm)})`);
-      searchConditions.push(`(sdtHocVien,eq,${encodeURIComponent(searchTerm)})`);
+      searchConditions.push(`(soDienThoaiHocVien,eq,${encodeURIComponent(searchTerm)})`);
 
-      conditions.push(`(${searchConditions.join("~orD")})`);
+      conditions.push(`(${searchConditions.join("~or")})`);
     }
 
-    // Điều kiện bộ lọc (nối bằng ~and~)
     if (statusFilter) {
       conditions.push(`(trangThaiChamSoc,eq,${encodeURIComponent(statusFilter)})`);
     }
@@ -92,7 +91,6 @@ export default function DataBanGiao() {
       conditions.push(`(nguoiChamSoc,eq,${encodeURIComponent(ctvFilter)})`);
     }
 
-    // Xây dựng chuỗi truy vấn `where`
     let whereQuery = conditions.length > 0 ? `&where=(${conditions.join("~and")})` : '&where=';
 
     const url = `${API_BASE_URL}?limit=${PAGE_SIZE}&offset=${offset}${whereQuery}`;
@@ -104,18 +102,29 @@ export default function DataBanGiao() {
       });
 
       if (!response.ok) throw new Error('Lỗi khi lấy dữ liệu');
-console.log(url);
 
       const data = await response.json();
       setRows(data.list || []);
       setTotalRows(data.pageInfo.totalRows);
       setCheckedItems({});
+
+      // Fetch thông tin gói mua cho từng học viên
+      const goiMuaPromises = data.list.map(async (row) => {
+        const goiMuaList = await fetchGoiMuaData(row.maTheoDoi, row.sanPham);
+        return { id: row.Id, goiMuaList };
+      });
+
+      const goiMuaResults = await Promise.all(goiMuaPromises);
+      const goiMuaData = goiMuaResults.reduce((acc, { id, goiMuaList }) => {
+        acc[id] = goiMuaList;
+        return acc;
+      }, {});
+
+      setGoiMuaData(goiMuaData);
     } catch (error) {
       console.error('Lỗi:', error);
     }
   };
-
-
 
   useEffect(() => {
     fetchData(page);
@@ -133,6 +142,25 @@ console.log(url);
     fetchData(0, '', '', '', ''); // Load lại dữ liệu
   };
 
+  const fetchGoiMuaData = async (maTheoDoi, sanPham) => {
+    try {
+      const response = await fetch(
+        `https://noco-erp.com/api/v2/tables/mk6ivvxeycpuwp4/records?where=(maTheoDoi,eq,${maTheoDoi})~and(sanPham,eq,${sanPham})`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "xc-token": API_TOKEN,
+          },
+        }
+      );
+      const result = await response.json();
+      return result.list || [];
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu gói mua:", error);
+      return [];
+    }
+  };
 
   return (
     <SnackbarProvider maxSnack={3}
@@ -277,12 +305,32 @@ console.log(url);
                     </TableCell>
                     <TableCell>{page * PAGE_SIZE + index + 1}</TableCell>
                     <TableCell>{row.ngayBanGiao}</TableCell>
-                    <TableCell>{row.maTheoDoiMoi}</TableCell>
+                    <TableCell>{row.maTheoDoi}</TableCell>
                     <TableCell>{row.sanPham}</TableCell>
                     <TableCell>{row.goiMua}</TableCell>
                     <TableCell>{row.tenHocVien}</TableCell>
-                    <TableCell>{row.sdtHocVien}</TableCell>
-                    <TableCell>{row.loTrinh}</TableCell>
+                    <TableCell>{row.soDienThoaiHocVien}</TableCell>
+                    <TableCell>
+                      {goiMuaData[row.Id] && (
+                        <Box>
+                          <Typography variant="body2">
+                            Số gói: {goiMuaData[row.Id].length}
+                          </Typography>
+                          {goiMuaData[row.Id].map((goi, index) => (
+                            <Typography
+                              key={index}
+                              variant="body2"
+                              sx={{
+                                fontWeight: goi.trangThaiGoi === 'Active' ? 'bold' : 'normal',
+                                color: goi.trangThaiGoi === 'Active' ? 'green' : 'inherit',
+                              }}
+                            >
+                              {goi.goiMua} ({goi.trangThaiGoi})
+                            </Typography>
+                          ))}
+                        </Box>
+                      )}
+                    </TableCell>
                     <TableCell>{row.trangThaiChamSoc}</TableCell>
                     <TableCell>{row.nguoiChamSoc}</TableCell>
                     <TableCell>

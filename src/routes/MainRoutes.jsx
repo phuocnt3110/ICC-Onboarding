@@ -16,6 +16,10 @@ const UtilsShadow = Loadable(lazy(() => import('views/utilities/Shadow')));
 const DataBanGiao = Loadable(lazy(() => import('../views/data-ban-giao')));
 //Đường dẫn đến Edit Data bàn giao
 const EditDataBanGiao = Loadable(lazy(() => import('../views/data-ban-giao/edit')));
+
+
+//Đường dẫn đến Data lớp
+const DataLop = Loadable(lazy(() => import('../views/data-lop')));
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 
@@ -25,6 +29,10 @@ const MainRoutes = {
   path: '/',
   element: <MainLayout />,
   children: [
+    {
+      path: 'data-lop',
+      element: <DataLop />
+    },
     {
       path: 'data-ban-giao',
       element: <DataBanGiao />

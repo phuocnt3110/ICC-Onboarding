@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
-import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -11,7 +10,8 @@ import AuthWrapper1 from './AuthWrapper1';
 import AuthCardWrapper from './AuthCardWrapper';
 import AuthLogin from '../auth-forms/AuthLogin';
 
-import Logo from 'ui-component/Logo';
+import logo from "../../../assets/images/logo.png"; // Đường dẫn đến ảnh
+
 import AuthFooter from 'ui-component/cards/AuthFooter';
 
 // ================================|| AUTH3 - LOGIN ||================================ //
@@ -29,7 +29,8 @@ export default function Login() {
                 <Grid container spacing={2} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                   <Grid sx={{ mb: 3 }}>
                     <Link to="#" aria-label="logo">
-                      <Logo />
+                      <img src={logo} alt="Logo" style={{ width: "300px", height: "auto" }} />
+
                     </Link>
                   </Grid>
                   <Grid size={12}>
@@ -37,10 +38,7 @@ export default function Login() {
                       <Grid>
                         <Stack spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
                           <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main' }}>
-                            Hi, Welcome Back
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
-                            Enter your credentials to continue
+                            Chào mừng đến với Website Giáo Vụ
                           </Typography>
                         </Stack>
                       </Grid>
@@ -48,16 +46,6 @@ export default function Login() {
                   </Grid>
                   <Grid size={12}>
                     <AuthLogin />
-                  </Grid>
-                  <Grid size={12}>
-                    <Divider />
-                  </Grid>
-                  <Grid size={12}>
-                    <Grid container direction="column" sx={{ alignItems: 'center' }} size={12}>
-                      <Typography component={Link} to="/register" variant="subtitle1" sx={{ textDecoration: 'none' }}>
-                        Don&apos;t have an account?
-                      </Typography>
-                    </Grid>
                   </Grid>
                 </Grid>
               </AuthCardWrapper>

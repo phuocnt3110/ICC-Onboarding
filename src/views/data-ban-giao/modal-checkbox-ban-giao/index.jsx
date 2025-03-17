@@ -63,7 +63,7 @@ const CheckboxWithModal = ({ isVisible, onClose, selectedIds }) => {
 
     try {
       const requests = selectedIds.map((Id) =>
-        fetch("https://noco-erp.com/api/v2/tables/mj4sos7rrkeysgp/records", {
+        fetch("https://noco-erp.com/api/v2/tables/mk6ivvxeycpuwp4/records", {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
