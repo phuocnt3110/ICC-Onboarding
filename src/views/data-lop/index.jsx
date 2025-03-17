@@ -166,15 +166,11 @@ export default function DataLop() {
                         </IconButton>
                     </Box>
                 </Paper>
-                {/* Modal hiển thị khi nhấn Assign Task */}
-                {/* <CheckboxWithModal
-          isVisible={openModal}
-          onClose={() => setOpenModal(false)}
-          selectedIds={Object.keys(checkedItems).filter((id) => checkedItems[id])} // Truyền danh sách ID đã chọn
-        /> */}
-                <AddModal open={openModal} onClose={() => setOpenModal(false)} />
-
-                {/* Phần bảng dữ liệu */}
+                <AddModal
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    fetchData={fetchData}
+                />
                 <Paper elevation={3} sx={{ padding: 2 }}>
                     <TableContainer sx={{ maxHeight: 500, overflow: 'auto' }}>
                         <Table stickyHeader>
@@ -201,7 +197,7 @@ export default function DataLop() {
                                     <TableCell>Số buổi</TableCell>
                                     <TableCell sx={{ width: '150px' }}>Dự kiến khai giảng</TableCell>
                                     <TableCell sx={{ width: '200px' }}>Lịch học</TableCell>
-                                    <TableCell>Tên giáo viên</TableCell>
+                                    {/* <TableCell>Tên giáo viên</TableCell> */}
                                     <TableCell>Slot còn</TableCell>
                                     <TableCell>Trạng thái</TableCell>
                                     <TableCell>Hành động</TableCell>
@@ -228,11 +224,11 @@ export default function DataLop() {
                                                 </Typography>
                                             ))}
                                         </TableCell>
-                                        <TableCell>{row.tenGiaoVien}</TableCell>
+                                        {/* <TableCell>{row.tenGiaoVien}</TableCell> */}
                                         <TableCell>{row.soSlotConLai}</TableCell>
                                         <TableCell>{row.status}</TableCell>
                                         <TableCell>
-                                            <IconButton title="Chỉnh sửa" onClick={() => navigate(`/data-ban-giao/edit/${row.Id}`)}>
+                                            <IconButton title="Chỉnh sửa" onClick={() => navigate(`/data-lop/edit/${row.classCode}`)}>
                                                 <Edit />
                                             </IconButton>
                                         </TableCell>

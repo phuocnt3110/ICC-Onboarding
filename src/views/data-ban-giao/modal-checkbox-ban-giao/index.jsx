@@ -81,8 +81,8 @@ const CheckboxWithModal = ({ isVisible, onClose, selectedIds }) => {
         window.location.reload(); // Reload lại trang sau khi modal đóng
       }, 500);
     } catch (error) {
-      console.error("Lỗi khi cập nhật:", error);
-      enqueueSnackbar("Có lỗi xảy ra, vui lòng thử lại!", { variant: "error", autoHideDuration: 2000 });
+      // console.error("Lỗi khi cập nhật:", error);
+      // enqueueSnackbar("Có lỗi xảy ra, vui lòng thử lại!", { variant: "error", autoHideDuration: 2000 });
     }
   };
 

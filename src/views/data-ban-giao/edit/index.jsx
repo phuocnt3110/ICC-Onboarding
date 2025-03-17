@@ -19,7 +19,6 @@ export default function EditDataBanGiao() {
   const [error, setError] = useState(null);
   const [ctvOptions, setCtvOptions] = useState([]);
   const [historyData, setHistoryData] = useState([]);
-  // const [openModal, setOpenModal] = useState(false);
   const [noteTextOut, setNoteTextOut] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
@@ -27,6 +26,10 @@ export default function EditDataBanGiao() {
   const [soKhoaDaMua, setSoKhoaDaMua] = useState(0);
   const [danhSachGoiMua, setDanhSachGoiMua] = useState([]);
   const [danhSachSanPham, setDanhSachSanPham] = useState([]);
+  const [openClassModal, setOpenClassModal] = useState(false);
+  const [classData, setClassData] = useState([]);
+  const [loadingClass, setLoadingClass] = useState(false);
+  const [trangThaiLop, setTrangThaiLop] = useState('');
   const [formData, setFormData] = useState({
     Id: '',
     tenHocVien: '',
@@ -65,8 +68,10 @@ export default function EditDataBanGiao() {
     }
   };
 
+
+
   useEffect(() => {
-    fetchHistoryData(`https://noco-erp.com/api/v2/tables/mmjdkkvi5kz810t/records?where=(idGoiMuaHocVien,eq,${id})`); // Load dữ liệu lịch sử chăm sóc
+    fetchHistoryData(`https://noco-erp.com/api/v2/tables/mmjdkkvi5kz810t/records?where=(idGoiMuaHocVien,eq,${id})`);
   }, []);
 
   const handleTabChange = (event, newIndex) => {
@@ -470,6 +475,127 @@ export default function EditDataBanGiao() {
 
   const danhSachNhom = nhomSanPhamTheoGoiMua(danhSachSanPham);
 
+  // Hàm mở modal và fetch dữ liệu lớp học
+  const handleOpenClassModal = async () => {
+    setOpenClassModal(true);
+    setLoadingClass(true);
+    try {
+      const response = await fetch(
+        `https://noco-erp.com/api/v2/tables/ms5mdxf53amdyeh/records?where=(product,eq,${encodeURIComponent(data.sanPham)})~and(trinhDo,eq,${encodeURIComponent(data.goiMua)})&limit=25&shuffle=0&offset=0`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'xc-token': API_TOKEN,
+          },
+        }
+      );
+      console.log(`https://noco-erp.com/api/v2/tables/ms5mdxf53amdyeh/records?where=(product,eq,${data.sanPham})~and(trinhDo,eq,${data.goiMua})&limit=25&shuffle=0&offset=0`);
+
+      if (!response.ok) throw new Error('Lỗi khi lấy dữ liệu lớp học');
+      const result = await response.json();
+      groupDataByClassCode(result.list || []); // Nhóm dữ liệu theo classCode
+    } catch (error) {
+      // console.error('Lỗi:', error);
+      // enqueueSnackbar('Có lỗi xảy ra khi lấy dữ liệu lớp học', { variant: 'error', autoHideDuration: 2000 });
+    } finally {
+      setLoadingClass(false);
+    }
+  };
+
+  // Hàm đóng modal
+  const handleCloseClassModal = () => {
+    setOpenClassModal(false);
+  };
+
+  // Hàm nhóm dữ liệu theo classCode
+  const groupDataByClassCode = (data) => {
+    const grouped = data.reduce((acc, row) => {
+      if (!acc[row.classCode]) {
+        acc[row.classCode] = { ...row, lichHoc: [] };
+      }
+      acc[row.classCode].lichHoc.push(`${row.ngayHoc}: ${row.gioBatDau} - ${row.gioKetThuc}`);
+      return acc;
+    }, {});
+
+    setClassData(Object.values(grouped)); // Cập nhật dữ liệu đã nhóm
+  };
+  const fetchTrangThaiLop = async (maLop) => {
+    try {
+      const response = await fetch(
+        `https://noco-erp.com/api/v2/tables/ms5mdxf53amdyeh/records?where=(classCode,eq,${maLop})`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "xc-token": API_TOKEN,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Lỗi khi lấy dữ liệu trạng thái lớp học");
+
+      const result = await response.json();
+      if (result.list.length > 0) {
+        setTrangThaiLop(result.list[0].status); // Giả sử trạng thái lớp học nằm trong trường 'status'
+      } else {
+        setTrangThaiLop('Không có dữ liệu');
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải trạng thái lớp học:", error);
+      setTrangThaiLop('Lỗi khi tải dữ liệu');
+    }
+  };
+
+  const handleSelectClass = async (selectedClass) => {
+    try {
+      const patchData = {
+        Id: data.Id, // ID của học viên
+        maLop: selectedClass.classCode, // Mã lớp học được chọn
+        ngayKhaiGiangDuKien: selectedClass.ngayKhaiGiangDuKien, // Ngày khai giảng dự kiến
+        lichHoc: selectedClass.lichHoc.join(', '), // Lịch học
+      };
+
+      // Gửi yêu cầu PATCH để cập nhật dữ liệu
+      const patchResponse = await fetch(`${API_BASE_URL}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "xc-token": API_TOKEN,
+        },
+        body: JSON.stringify(patchData),
+      });
+
+      if (!patchResponse.ok) throw new Error("Lỗi khi cập nhật dữ liệu");
+
+      // Cập nhật lại state formData
+      setFormData((prevData) => ({
+        ...prevData,
+        maLop: selectedClass.classCode,
+        ngayKhaiGiangDuKien: selectedClass.ngayKhaiGiangDuKien,
+        lichHoc: selectedClass.lichHoc.join(', '),
+      }));
+
+      // Fetch trạng thái lớp học
+      fetchTrangThaiLop(selectedClass.classCode);
+
+      // Gửi ghi chú về việc thay đổi mã lớp
+      const changeMessage = `Thay đổi mã lớp: ${initialData.maLop} -> ${selectedClass.classCode}`;
+      await handleSubmitNote(changeMessage, data.Id);
+
+      setOpenClassModal(false); // Đóng modal sau khi chọn lớp
+      enqueueSnackbar("Cập nhật lớp học thành công!", { variant: "success" });
+    } catch (error) {
+      console.error("Lỗi khi cập nhật lớp học:", error);
+      enqueueSnackbar("Lỗi khi cập nhật lớp học!", { variant: "error" });
+    }
+  };
+  
+  useEffect(() => {
+    if (formData.maLop) {
+      fetchTrangThaiLop(formData.maLop);
+    }
+  }, [formData.maLop]);
   if (loading) return <CircularProgress />;
   if (error) return <p>{error}</p>;
 
@@ -564,7 +690,7 @@ export default function EditDataBanGiao() {
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <TextField name="maTheoDoi" label="Mã Theo Dõi" value={data.maTheoDoi || ''} fullWidth sx={{ mb: 2 }} disabled />
-                <TextField name="maHocVienGiaHan" label="Mã Học Viên Gia Hạn" value={data.maHocVienGiaHan || ''} fullWidth sx={{ mb: 2 }} disabled />
+                <TextField name="maBOS" label="Mã BOS" value={data.maBOS || ''} fullWidth sx={{ mb: 2 }} disabled />
                 <TextField
                   name="tenHocVien"
                   label="Tên Học Viên"
@@ -641,9 +767,12 @@ export default function EditDataBanGiao() {
           </Paper>
 
           <Paper elevation={3} sx={{ padding: 2, mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Thông tin lớp học
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h6">Thông tin lớp học</Typography>
+              <Button variant="contained" color="primary" onClick={handleOpenClassModal}>
+                Chọn lớp học
+              </Button>
+            </Box>
 
             <Grid container spacing={2}>
               <Grid item xs={6}>
@@ -652,10 +781,66 @@ export default function EditDataBanGiao() {
                 <TextField name="ngayKhaiGiangDuKien" label="Ngày khai giảng dự kiến" value={data.ngayKhaiGiangDuKien || ''} fullWidth sx={{ mb: 2 }} disabled />
               </Grid>
               <Grid item xs={6}>
-                <TextField name="maLop" label="Trạng thái Lớp" value={data.maLop || ''} fullWidth sx={{ mb: 2 }} disabled />
+                <TextField
+                  name="trangThaiLop"
+                  label="Trạng thái Lớp"
+                  value={trangThaiLop || ''}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  disabled
+                />
               </Grid>
             </Grid>
           </Paper>
+          {/* Modal chọn lớp học */}
+          <Dialog open={openClassModal} onClose={handleCloseClassModal} maxWidth="md" fullWidth>
+            <DialogTitle>Chọn lớp học</DialogTitle>
+            <DialogContent>
+              {loadingClass ? (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight="100px">
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>STT</TableCell>
+                        <TableCell>Mã lớp</TableCell>
+                        <TableCell>Lịch học</TableCell>
+                        <TableCell>Ngày khai giảng dự kiến</TableCell>
+                        <TableCell>Hành động</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {classData.map((row, index) => (
+                        <TableRow key={row.classCode}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{row.classCode}</TableCell>
+                          <TableCell>{row.lichHoc.join(', ')}</TableCell>
+                          <TableCell>{row.ngayKhaiGiangDuKien}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={() => handleSelectClass(row)}
+                            >
+                              Chọn
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseClassModal} color="secondary">
+                Đóng
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           <Paper elevation={3} sx={{ padding: 2, mb: 2 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>Thông tin chăm sóc</Typography>

@@ -9,7 +9,7 @@
     "@fontsource/poppins": "5.1.0",
     "@fontsource/roboto": "5.1.0",
     "@mui/icons-material": "6.1.9",
-    "@mui/material": "6.1.9",
+    "@mui/material": "^6.1.9",
     "@tabler/icons-react": "3.24.0",
     "@vitejs/plugin-react": "4.3.4",
     "antd": "^5.24.3",

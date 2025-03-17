@@ -20,6 +20,8 @@ const EditDataBanGiao = Loadable(lazy(() => import('../views/data-ban-giao/edit'
 
 //Đường dẫn đến Data lớp
 const DataLop = Loadable(lazy(() => import('../views/data-lop')));
+//Đường dẫn đến Edit Data lớp
+const EditDataLop = Loadable(lazy(() => import('../views/data-lop/edit')));
 // sample page routing
 const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 
@@ -40,6 +42,10 @@ const MainRoutes = {
     {
       path: 'data-ban-giao/edit/:id',
       element: <EditDataBanGiao />
+    },
+    {
+      path: 'data-lop/edit/:classCode',
+      element: <EditDataLop />
     },
     {
       path: '/',
