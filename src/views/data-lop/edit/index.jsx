@@ -253,6 +253,7 @@ console.log(apiUrl);
                                         <TableCell>Tên học viên</TableCell>
                                         <TableCell>SDT học viên</TableCell>
                                         <TableCell>Email học viên</TableCell>
+                                        <TableCell>Loại học viên</TableCell>
                                         <TableCell>Hành động</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -264,6 +265,7 @@ console.log(apiUrl);
                                             <TableCell>{hocVien.tenHocVien}</TableCell>
                                             <TableCell>{hocVien.soDienThoaiHocVien}</TableCell>
                                             <TableCell>{hocVien.emailHocVien}</TableCell>
+                                            <TableCell>{hocVien.loaiDon}</TableCell>
                                             <TableCell>
                                                 <Button
                                                     variant="contained"
